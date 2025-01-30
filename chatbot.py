@@ -6,12 +6,9 @@ from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
 from pymongo import MongoClient
 import google.generativeai as gemini
 from datetime import datetime
-import base64
+from dotenv import load_dotenv
+load_dotenv()
 import os
-import requests
-import io
-import logging
-import tempfile
 
 #API KEY
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
