@@ -1,6 +1,6 @@
 #libraries
 from typing import Final
-from telegram import Update
+# from telegram import Update
 from telegram.ext import Application, CommandHandler , MessageHandler, filters, ContextTypes, CallbackContext
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
 from pymongo import MongoClient
@@ -9,6 +9,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 import os
+from googletrans import Translator, LANGUAGES
+
+
+translator = Translator()
 
 #API KEY
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
@@ -68,6 +72,23 @@ async def phone_number_received(update: Update, context: CallbackContext) -> Non
             user_collections.insert_one(user_data)
             await update.message.reply_text("✅ Registration complete! Your phone number has been saved.")
 
+#TRANSLATION FUNCTION 
+async def trans(update: Update, context: CallbackContext):
+    if len(context.args)==0:
+        await update.message.reply_text("Please provide a language code to translate")
+    else:
+        lang_code = context.args[0]
+        user_text = " ".join(context.args[1:])
+        try:
+            if lang_code in LANGUAGES:
+                translated = await translator.translate(user_text,lang_code)
+                await update.message.reply_text(f"Translated text to {lang_code}: {translated.text}")
+            else:
+                await update.message.reply_text("Invalid Code. Give a valid code to translate")
+        except Exception as e:
+            await update.message.reply_text(f"Please provide a language code.{str(e)}")
+
+
 
 #GEMINI-POWERED-CHATBOT-FUNCTION
 async def gemini_chatbot(update: Update, context: CallbackContext):
@@ -105,6 +126,7 @@ async def gemini_chatbot(update: Update, context: CallbackContext):
 if __name__ == '__main__':
     print("start")
     app = Application.builder().token(TELEGRAM_API_KEY).build()
+    app.add_handler(CommandHandler('trans',trans))
     app.add_handler(CommandHandler('start',start))
     app.add_handler(MessageHandler(filters.CONTACT, phone_number_received))
     app.add_handler(MessageHandler(filters.TEXT,gemini_chatbot))
